@@ -62,7 +62,7 @@ async function main() {
   const jit = new Float32Array(N * 3),
     phase = new Float32Array(N);
   for (let i = 0; i < N; i++) {
-    aSize[i] = 0.55 + Math.random() * 0.9;
+    aSize[i] = 0.8 + Math.random() * 0.4;
     phase[i] = Math.random() * 6.283;
     const u = Math.random() * 2 - 1,
       a = Math.random() * 6.283,
@@ -100,7 +100,7 @@ async function main() {
   };
   const mk = () => ({ pos: new Float32Array(N * 3), col: new Float32Array(N * 3) });
   const S = [];
-  const sizes = [2.3, 2.3, 3.8, 2.5, 2.0, 2.2].map((v) => (small ? v * 1.25 : v));
+  const sizes = [2.3, 2.3, 4.6, 2.5, 2.0, 2.2].map((v) => (small ? v * 1.25 : v));
 
   // ---------- 0 + 5: name ----------
   async function textPoints() {
@@ -207,70 +207,75 @@ async function main() {
   // ---------- 2: analog photos (real scans, cycling) ----------
   const PHOTOS = JSON.parse(canvas.dataset.photos || '[]');
   const photo = mk(),
-    PH_N = PHOTOS.length,
     phPos = [],
     phCol = [];
+  // Photos are laid out on a regular grid (one particle = one pixel of a cols x rows thumbnail),
+  // so the picture reads like a halftone print instead of random noise.
   const PW = 7.2,
     PHh = 4.8,
-    ptop = PHh / 2,
-    isFrame = new Uint8Array(N);
-  for (let i = 0; i < N; i++) isFrame[i] = Math.random() < 0.86 ? 1 : 0;
-  const frameU = new Float32Array(N),
-    frameV = new Float32Array(N);
-  for (let i = 0; i < N; i++) {
-    frameU[i] = Math.random();
-    frameV[i] = Math.random();
+    ptop = PHh / 2;
+  const nFrame = Math.floor(N * 0.9);
+  const cols = Math.round(Math.sqrt((nFrame * PW) / PHh)),
+    rows = Math.floor(nFrame / cols),
+    nGrid = cols * rows,
+    cell = PW / cols;
+
+  // Film-strip borders: regular dots with clean sprocket holes.
+  const borderPts = [];
+  {
+    const step = cell * 1.15;
+    for (const band of [1, -1])
+      for (let yy = ptop + 0.1; yy < ptop + 0.68; yy += step)
+        for (let x = -PW / 2 - 0.4; x < PW / 2 + 0.4; x += step) {
+          const hx = (((x + 10) % 0.5) + 0.5) % 0.5;
+          const hole = hx > 0.14 && hx < 0.36 && yy > ptop + 0.24 && yy < ptop + 0.5;
+          if (!hole) borderPts.push(x, band * yy);
+        }
   }
+
   async function loadPhotos() {
+    const c = document.createElement('canvas');
+    c.width = cols;
+    c.height = rows;
+    const g = c.getContext('2d', { willReadFrequently: true });
     for (const src of PHOTOS) {
       const img = new Image();
       img.src = src;
       await img.decode();
-      const c = document.createElement('canvas');
-      c.width = 240;
-      c.height = 160;
-      const g = c.getContext('2d');
-      g.drawImage(img, 0, 0, 240, 160);
-      const d = g.getImageData(0, 0, 240, 160).data;
+      g.drawImage(img, 0, 0, cols, rows); // the browser averages pixels: smooth, no aliasing
+      const d = g.getImageData(0, 0, cols, rows).data;
       const P = new Float32Array(N * 3),
         C = new Float32Array(N * 3);
+      const tone = (v) => Math.min(1, Math.max(0, (v / 255 - 0.02) * 1.3));
       for (let i = 0; i < N; i++) {
-        if (isFrame[i]) {
-          const u = frameU[i],
-            v = frameV[i],
-            o = (Math.min(159, (v * 160) | 0) * 240 + Math.min(239, (u * 240) | 0)) * 4,
-            gn = (Math.random() - 0.5) * 0.16;
-          P[i * 3] = (u - 0.5) * PW;
-          P[i * 3 + 1] = (0.5 - v) * PHh;
-          P[i * 3 + 2] = (Math.random() - 0.5) * 0.06;
-          C[i * 3] = Math.min(1, Math.max(0, (d[o] / 255) * 1.12 + gn));
-          C[i * 3 + 1] = Math.min(1, Math.max(0, (d[o + 1] / 255) * 1.12 + gn));
-          C[i * 3 + 2] = Math.min(1, Math.max(0, (d[o + 2] / 255) * 1.12 + gn));
+        const o3 = i * 3;
+        if (i < nGrid) {
+          const cx = i % cols,
+            cy = (i / cols) | 0,
+            o = i * 4,
+            gn = (Math.random() - 0.5) * 0.05;
+          P[o3] = (cx + 0.5) * cell - PW / 2 + (Math.random() - 0.5) * cell * 0.2;
+          P[o3 + 1] = PHh / 2 - (cy + 0.5) * cell + (Math.random() - 0.5) * cell * 0.2;
+          P[o3 + 2] = (Math.random() - 0.5) * 0.03;
+          C[o3] = tone(d[o]) + gn;
+          C[o3 + 1] = tone(d[o + 1]) + gn;
+          C[o3 + 2] = tone(d[o + 2]) + gn;
         } else {
-          let x, y;
-          for (;;) {
-            x = (Math.random() - 0.5) * (PW + 0.8);
-            const band = Math.random() < 0.5 ? 1 : -1;
-            const yy = ptop + 0.08 + Math.random() * 0.62;
-            y = band * yy;
-            const hx = (((x + 10) % 0.5) + 0.5) % 0.5;
-            if (!(hx > 0.14 && hx < 0.36 && yy > ptop + 0.24 && yy < ptop + 0.5)) break;
-          }
-          P[i * 3] = x;
-          P[i * 3 + 1] = y;
-          P[i * 3 + 2] = (Math.random() - 0.5) * 0.04;
-          const b = 0.6 + Math.random() * 0.4;
-          C[i * 3] = 0.42 * b;
-          C[i * 3 + 1] = 0.22 * b;
-          C[i * 3 + 2] = 0.1 * b;
+          const k = ((i - nGrid) * 2) % borderPts.length;
+          P[o3] = borderPts[k];
+          P[o3 + 1] = borderPts[k + 1];
+          P[o3 + 2] = 0;
+          const bb = 0.75 + Math.random() * 0.25;
+          C[o3] = 0.42 * bb;
+          C[o3 + 1] = 0.22 * bb;
+          C[o3 + 2] = 0.1 * bb;
         }
       }
       phPos.push(P);
       phCol.push(C);
     }
   }
-  let phIdx = 0,
-    phT0 = 0;
+  let phIdx = 0;
   const PH_HOLD = 4.5,
     PH_MIX = 1.4;
   photo.dyn = (t) => {
