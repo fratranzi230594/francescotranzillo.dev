@@ -1,0 +1,4 @@
+# Copy to backend.hcl and fill in. The state bucket is created once by hand (see README).
+bucket = "francescotranzillo-dev-tfstate-<ACCOUNT_ID>"
+key    = "site/terraform.tfstate"
+region = "eu-central-1"

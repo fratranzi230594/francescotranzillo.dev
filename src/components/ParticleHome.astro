@@ -1,0 +1,231 @@
+---
+import { t, type Lang } from '../i18n/ui';
+
+interface Props {
+  lang: Lang;
+}
+const { lang } = Astro.props;
+const tr = t(lang);
+
+// Small (240x160) versions of the film scans: each particle takes the colour of one pixel.
+const photos = ['fes-tanneries', 'jemaa-el-fna', 'fountain', 'chefchaouen', 'sunset', 'volubilis'].map(
+  (n) => `/particles/${n}.jpg`,
+);
+
+const sections = [
+  { k: tr('hero.k0'), h: tr('hero.h0'), hint: tr('hero.hint') },
+  { k: tr('hero.k1'), h: tr('hero.h1'), p: tr('hero.p1') },
+  { k: tr('hero.k2'), h: tr('hero.h2'), p: tr('hero.p2') },
+  { k: tr('hero.k3'), h: tr('hero.h3'), p: tr('hero.p3') },
+  { k: tr('hero.k4'), h: tr('hero.h4'), p: tr('hero.p4') },
+];
+---
+
+<canvas id="gl" data-photos={JSON.stringify(photos)} aria-hidden="true"></canvas>
+<div class="vignette" aria-hidden="true"></div>
+<div class="grain" id="grain" aria-hidden="true"></div>
+<nav class="dots" id="dots" aria-hidden="true"></nav>
+
+<main class="scenes">
+  {sections.map((s, i) => (
+    <section id={`scene-${i}`}>
+      <div class="copy">
+        <div class="k">{s.k}</div>
+        {i === 0 ? <h1>{s.h}</h1> : <h2>{s.h}</h2>}
+        {s.p && <p class="s">{s.p}</p>}
+        {s.hint && (
+          <div class="hint">
+            <i />
+            <span>{s.hint}</span>
+          </div>
+        )}
+      </div>
+    </section>
+  ))}
+  <section id="contact">
+    <div class="copy">
+      <div class="k">{tr('hero.k5')}</div>
+      <h2>{tr('hero.h5')}</h2>
+      <div class="cta">
+        <a href="https://www.linkedin.com/in/tschitschtscho" target="_blank" rel="noopener">
+          LinkedIn ↗
+        </a>
+        <a href="/blog/">Blog →</a>
+        <a href="#scene-0">{tr('hero.top')}</a>
+      </div>
+    </div>
+  </section>
+</main>
+
+<script>
+  import '../scripts/particles.js';
+</script>
+
+<style>
+  #gl {
+    position: fixed;
+    inset: 0;
+    width: 100vw;
+    height: 100vh;
+    display: block;
+    z-index: 0;
+  }
+  .vignette {
+    position: fixed;
+    inset: 0;
+    pointer-events: none;
+    z-index: 1;
+    background: radial-gradient(ellipse at center, rgba(0, 0, 0, 0) 45%, rgba(0, 0, 0, 0.65) 100%);
+  }
+  .grain {
+    position: fixed;
+    inset: -50%;
+    pointer-events: none;
+    z-index: 2;
+    opacity: 0.08;
+    background-size: 180px 180px;
+    mix-blend-mode: screen;
+  }
+  .dots {
+    position: fixed;
+    right: clamp(14px, 3vw, 34px);
+    top: 50%;
+    transform: translateY(-50%);
+    z-index: 10;
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+  }
+  .dots :global(a) {
+    display: block;
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: rgba(255, 255, 255, 0.22);
+    transition: 0.3s;
+  }
+  .dots :global(a.on) {
+    background: var(--accent);
+    transform: scale(1.4);
+  }
+  .scenes {
+    position: relative;
+    z-index: 5;
+    pointer-events: none;
+  }
+  section {
+    height: 100vh;
+    display: flex;
+    align-items: flex-end;
+    padding: 0 clamp(18px, 5vw, 64px) clamp(36px, 9vh, 90px);
+  }
+  .copy {
+    max-width: 520px;
+    pointer-events: auto;
+  }
+  .k {
+    font-family: var(--mono);
+    font-size: 12px;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--accent);
+    margin-bottom: 12px;
+  }
+  h1,
+  h2 {
+    font-size: clamp(26px, 3.6vw, 44px);
+    line-height: 1.08;
+    font-weight: 500;
+    letter-spacing: -0.02em;
+  }
+  .s {
+    margin-top: 12px;
+    color: var(--dim);
+    font-size: 15px;
+    line-height: 1.55;
+    max-width: 440px;
+  }
+  .hint {
+    font-family: var(--mono);
+    font-size: 12px;
+    color: var(--dim);
+    margin-top: 18px;
+    display: flex;
+    gap: 8px;
+    align-items: center;
+  }
+  .hint i {
+    display: inline-block;
+    width: 1px;
+    height: 26px;
+    background: linear-gradient(var(--fg), transparent);
+    animation: drip 1.6s infinite;
+  }
+  @keyframes drip {
+    0% {
+      transform: scaleY(0);
+      transform-origin: top;
+    }
+    50% {
+      transform: scaleY(1);
+      transform-origin: top;
+    }
+    51% {
+      transform-origin: bottom;
+    }
+    100% {
+      transform: scaleY(0);
+      transform-origin: bottom;
+    }
+  }
+  .cta {
+    display: inline-flex;
+    gap: 10px;
+    margin-top: 20px;
+    flex-wrap: wrap;
+  }
+  .cta a {
+    text-decoration: none;
+    font-family: var(--mono);
+    font-size: 13px;
+    border: 1px solid rgba(255, 255, 255, 0.25);
+    padding: 10px 16px;
+    border-radius: 999px;
+    transition: 0.2s;
+  }
+  .cta a:hover {
+    border-color: var(--accent);
+    color: var(--accent);
+  }
+  :global(.lbl) {
+    position: fixed;
+    z-index: 4;
+    pointer-events: none;
+    font-family: var(--mono);
+    font-size: 11px;
+    letter-spacing: 0.06em;
+    color: var(--fg);
+    transform: translate(-50%, -50%);
+    white-space: nowrap;
+    opacity: 0;
+    text-shadow: 0 0 12px rgba(0, 0, 0, 0.9);
+  }
+  :global(.lbl.city) {
+    color: var(--accent);
+  }
+  :global(.lbl.city)::before {
+    content: '';
+    display: inline-block;
+    width: 5px;
+    height: 5px;
+    border-radius: 50%;
+    background: var(--accent);
+    margin-right: 6px;
+    vertical-align: middle;
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .hint i {
+      animation: none;
+    }
+  }
+</style>

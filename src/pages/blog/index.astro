@@ -1,0 +1,79 @@
+---
+import { getCollection } from 'astro:content';
+import Base from '../../layouts/Base.astro';
+import { t } from '../../i18n/ui';
+
+const tr = t('en');
+const posts = (await getCollection('blog', ({ data }) => import.meta.env.DEV || !data.draft)).sort(
+  (a, b) => b.data.date.valueOf() - a.data.date.valueOf(),
+);
+---
+
+<Base
+  lang="en"
+  title="Blog — Francesco Tranzillo"
+  description={tr('blog.intro')}
+  alternates={{ en: '/blog/' }}
+>
+  <main class="page">
+    <h1>{tr('blog.title')}</h1>
+    <p class="intro">{tr('blog.intro')}</p>
+    {posts.length === 0 && <p class="empty">Coming soon.</p>}
+    <ul>
+      {posts.map((p) => (
+        <li>
+          <a href={`/blog/${p.id}/`}>
+            <time datetime={p.data.date.toISOString()}>{p.data.date.toISOString().slice(0, 10)}</time>
+            <span>{p.data.title}</span>
+          </a>
+          {p.data.draft && <em> (draft)</em>}
+        </li>
+      ))}
+    </ul>
+  </main>
+</Base>
+
+<style>
+  .page {
+    max-width: 720px;
+    margin: 0 auto;
+    padding: 140px 24px 80px;
+  }
+  h1 {
+    font-size: clamp(32px, 5vw, 56px);
+    font-weight: 500;
+    letter-spacing: -0.02em;
+  }
+  .intro,
+  .empty {
+    color: var(--dim);
+    margin-top: 12px;
+  }
+  ul {
+    list-style: none;
+    margin-top: 40px;
+  }
+  li {
+    border-top: 1px solid rgba(255, 255, 255, 0.1);
+  }
+  li a {
+    display: flex;
+    gap: 24px;
+    padding: 18px 0;
+    text-decoration: none;
+  }
+  li a:hover span {
+    color: var(--accent);
+  }
+  time {
+    font-family: var(--mono);
+    font-size: 13px;
+    color: var(--dim);
+    min-width: 96px;
+    padding-top: 3px;
+  }
+  em {
+    color: var(--dim);
+    font-size: 13px;
+  }
+</style>

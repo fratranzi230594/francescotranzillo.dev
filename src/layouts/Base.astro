@@ -1,0 +1,140 @@
+---
+import { languages, homeHref, t, type Lang } from '../i18n/ui';
+
+interface Props {
+  lang: Lang;
+  title?: string;
+  description?: string;
+  /** Path of this page in each language, for the language switch and hreflang. */
+  alternates?: Partial<Record<Lang, string>>;
+}
+
+const { lang, title, description, alternates } = Astro.props;
+const tr = t(lang);
+const pageTitle = title ?? tr('meta.title');
+const pageDescription = description ?? tr('meta.description');
+const alt = alternates ?? { en: homeHref('en'), it: homeHref('it'), de: homeHref('de') };
+const canonical = new URL(Astro.url.pathname, Astro.site);
+---
+
+<!doctype html>
+<html lang={lang}>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>{pageTitle}</title>
+    <meta name="description" content={pageDescription} />
+    <link rel="canonical" href={canonical} />
+    {Object.entries(alt).map(([l, href]) => (
+      <link rel="alternate" hreflang={l} href={new URL(href, Astro.site)} />
+    ))}
+    <meta property="og:title" content={pageTitle} />
+    <meta property="og:description" content={pageDescription} />
+    <meta property="og:type" content="website" />
+    <meta name="theme-color" content="#07080c" />
+    <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;700&family=JetBrains+Mono:wght@400;500&display=swap"
+      rel="stylesheet"
+    />
+  </head>
+  <body>
+    <header class="site-header">
+      <a class="logo" href={homeHref(lang)}>
+        francesco<b>tranzillo</b>.dev
+      </a>
+      <nav class="langs" aria-label="Language">
+        <a class="nav-link" href="/blog/">
+          {tr('nav.blog')}
+        </a>
+        {(Object.keys(languages) as Lang[]).map((l) => (
+          <a href={alt[l] ?? homeHref(l)} class:list={['lang', { on: l === lang }]} hreflang={l} lang={l}>
+            {languages[l]}
+          </a>
+        ))}
+      </nav>
+    </header>
+    <slot />
+  </body>
+</html>
+
+<style is:global>
+  :root {
+    --bg: #07080c;
+    --fg: #eef2f7;
+    --dim: #8a93a6;
+    --accent: #ff9a3c;
+    --cyan: #5ee7ff;
+    --mono: 'JetBrains Mono', ui-monospace, monospace;
+    --sans: 'Space Grotesk', system-ui, sans-serif;
+  }
+  * {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+  }
+  html {
+    scroll-behavior: smooth;
+  }
+  body {
+    background: var(--bg);
+    color: var(--fg);
+    font-family: var(--sans);
+    overflow-x: hidden;
+  }
+  a {
+    color: inherit;
+  }
+  .site-header {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    z-index: 10;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 22px clamp(18px, 4vw, 44px);
+    font-family: var(--mono);
+    font-size: 13px;
+    letter-spacing: 0.04em;
+  }
+  .logo {
+    text-decoration: none;
+    font-weight: 500;
+  }
+  .logo b {
+    color: var(--accent);
+    font-weight: 500;
+  }
+  .langs {
+    display: flex;
+    gap: 4px;
+    align-items: center;
+  }
+  .langs a {
+    text-decoration: none;
+    color: var(--dim);
+    padding: 5px 9px;
+    border-radius: 999px;
+    border: 1px solid transparent;
+    transition: 0.2s;
+  }
+  .langs a:hover {
+    color: var(--fg);
+  }
+  .langs a.on {
+    color: var(--fg);
+    border-color: rgba(255, 255, 255, 0.25);
+  }
+  .langs .nav-link {
+    margin-right: 10px;
+  }
+  @media (prefers-reduced-motion: reduce) {
+    html {
+      scroll-behavior: auto;
+    }
+  }
+</style>

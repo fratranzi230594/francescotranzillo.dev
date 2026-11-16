@@ -1,0 +1,11 @@
+# Copy to terraform.tfvars (git-ignored) and adjust.
+
+# Leave empty for the first deploy: the site is served on the *.cloudfront.net URL.
+domain_name = ""
+
+# When you register the domain in Route 53, a hosted zone is created for you: keep this false.
+# If the domain is registered elsewhere, set true and copy the name_servers output to your registrar.
+create_hosted_zone = false
+
+# Set to false if your AWS account already has a GitHub OIDC provider.
+create_github_oidc_provider = true

@@ -1,0 +1,40 @@
+---
+import Base from '../layouts/Base.astro';
+---
+
+<Base lang="en" title="404 — Francesco Tranzillo">
+  <main class="nf">
+    <p class="code">404</p>
+    <h1>This particle drifted off.</h1>
+    <a href="/">← Back home</a>
+  </main>
+</Base>
+
+<style>
+  .nf {
+    min-height: 100vh;
+    display: grid;
+    place-content: center;
+    text-align: center;
+    gap: 14px;
+    padding: 24px;
+  }
+  .code {
+    font-family: var(--mono);
+    color: var(--accent);
+    letter-spacing: 0.2em;
+  }
+  h1 {
+    font-size: clamp(26px, 4vw, 42px);
+    font-weight: 500;
+  }
+  a {
+    font-family: var(--mono);
+    font-size: 13px;
+    color: var(--dim);
+    text-decoration: none;
+  }
+  a:hover {
+    color: var(--accent);
+  }
+</style>
